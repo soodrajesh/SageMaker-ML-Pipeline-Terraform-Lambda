@@ -10,24 +10,24 @@ This sits alongside another repo of mine, AWS-Sagemaker-MLOps-Pipeline, which co
 flowchart LR
     subgraph Triggers
         S3Upload["S3 PUT raw/*.csv"]
-        Schedule["CloudWatch Events\ncron(0 2 * * ? *)"]
+        Schedule["CloudWatch Events cron(0 2 * * ? *)"]
     end
 
-    S3Upload -->|s3:ObjectCreated| MLProcessor["Lambda: ml-processor"]
-    Schedule -->|"trigger_type=scheduled\naction=train_model"| MLProcessor
+    S3Upload -->|"s3:ObjectCreated"| MLProcessor["Lambda: ml-processor"]
+    Schedule -->|"trigger_type=scheduled action=train_model"| MLProcessor
 
-    MLProcessor -->|copy raw/ -> processed/| DataBucket[("S3 data bucket")]
-    MLProcessor -->|CreateTrainingJob\n(PassRole: sagemaker_execution_role)| TrainingJob["SageMaker Training Job\nml.m5.large"]
+    MLProcessor -->|"copy raw/ to processed/"| DataBucket[("S3 data bucket")]
+    MLProcessor -->|"CreateTrainingJob (PassRole: sagemaker_execution_role)"| TrainingJob["SageMaker Training Job ml.m5.large"]
 
-    TrainingJob -->|reads processed/*.csv| DataBucket
-    TrainingJob -->|writes model artifacts| ArtifactsBucket[("S3 artifacts bucket")]
+    TrainingJob -->|"reads processed/*.csv"| DataBucket
+    TrainingJob -->|"writes model artifacts"| ArtifactsBucket[("S3 artifacts bucket")]
 
-    ManualInvoke["aws lambda invoke\n(manual)"] --> BatchInference["Lambda: batch-inference"]
-    BatchInference -->|load model.joblib| ArtifactsBucket
-    BatchInference -->|load input csv| DataBucket
-    BatchInference -->|write predictions csv| ArtifactsBucket
+    ManualInvoke["aws lambda invoke (manual)"] --> BatchInference["Lambda: batch-inference"]
+    BatchInference -->|"load model.joblib"| ArtifactsBucket
+    BatchInference -->|"load input csv"| DataBucket
+    BatchInference -->|"write predictions csv"| ArtifactsBucket
 
-    Notebook["SageMaker Notebook Instance\n(manual dev/training)"] -.-> DataBucket
+    Notebook["SageMaker Notebook Instance (manual dev/training)"] -.-> DataBucket
     Notebook -.-> ArtifactsBucket
 ```
 
